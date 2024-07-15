@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Profile Maker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+        }
+        #pixelGrid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 0;
+            margin: 20px auto;
+            width: 300px;
+            height: 300px;
+            border: 1px solid #333333;
+            user-select: none;
+        }
+        .pixel {
+            width: 15px;
+            height: 15px;
+            background-color: #000000;
+            border: 0.5px solid #1b1b1b;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            background-color: #3bc9b6;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        #colorPicker {
+            width: 50px;
+            height: 50px;
+            vertical-align: middle;
+        }
+        #saveButton {
+            background-color: #008CBA;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pixel Profile Maker</h1>
+        <div id="pixelGrid"></div>
+        <div class="controls">
+            <input type="color" id="colorPicker" value="#000000">
+            <button id="randomColor">RandomColor</button>
+            <button id="resetGrid">Re Start</button>
+            <button id="saveButton">Save</button>
+        </div>
+    </div>
+
+    <script>
+        const pixelGrid = document.getElementById('pixelGrid');
+        const colorPicker = document.getElementById('colorPicker');
+        let currentColor = colorPicker.value;
+        let isDrawing = false;
+
+        // 픽셀 그리드 생성 (20x20)
+        for (let i = 0; i < 400; i++) {
+            const pixel = document.createElement('div');
+            pixel.className = 'pixel';
+            pixel.addEventListener('mousedown', startDrawing);
+            pixel.addEventListener('mouseover', draw);
+            pixel.addEventListener('mouseup', stopDrawing);
+            pixelGrid.appendChild(pixel);
+        }
+
+        // 색상 선택
+        colorPicker.addEventListener('change', (e) => {
+            currentColor = e.target.value;
+        });
+
+        // 그리기 시작
+        function startDrawing(e) {
+            isDrawing = true;
+            colorPixel(e.target);
+        }
+
+        // 그리기
+        function draw(e) {
+            if (isDrawing) {
+                colorPixel(e.target);
+            }
+        }
+
+        // 그리기 중지
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // 픽셀 색칠 함수
+        function colorPixel(pixel) {
+            pixel.style.backgroundColor = currentColor;
+            // 대칭 구현
+            const index = Array.from(pixelGrid.children).indexOf(pixel);
+            const row = Math.floor(index / 20);
+            const col = index % 20;
+            const symmetricIndex = (19 - row) * 20 + (19 - col);
+            pixelGrid.children[symmetricIndex].style.backgroundColor = currentColor;
+        }
+
+        // 랜덤 색상 생성
+        document.getElementById('randomColor').addEventListener('click', () => {
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            colorPicker.value = randomColor;
+            currentColor = randomColor;
+        });
+
+        // 그리드 초기화
+        document.getElementById('resetGrid').addEventListener('click', () => {
+            document.querySelectorAll('.pixel').forEach(pixel => {
+                pixel.style.backgroundColor = '#000000';
+            });
+        });
+
+        // 그리기 중지 (마우스가 그리드 밖으로 나갔을 때)
+        pixelGrid.addEventListener('mouseleave', stopDrawing);
+        // 이미지 저장 함수
+        function saveImage() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 300;
+
+            // 픽셀 그리드를 캔버스에 그리기
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach((pixel, index) => {
+                const row = Math.floor(index / 20);
+                const col = index % 20;
+                ctx.fillStyle = pixel.style.backgroundColor || '#000000';
+                ctx.fillRect(col * 15, row * 15, 15, 15);
+            });
+
+            // 캔버스를 이미지로 변환
+            const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+
+            // 다운로드 링크 생성 및 클릭
+            const link = document.createElement('a');
+            link.download = 'pixel_art.png';
+            link.href = image;
+            link.click();
+        }
+
+        // 저장 버튼에 이벤트 리스너 추가
+        document.getElementById('saveButton').addEventListener('click', saveImage);
+
+        // 그리기 중지 (마우스가 그리드 밖으로 나갔을 때)
+        pixelGrid.addEventListener('mouseleave', stopDrawing);
+    </script>
+</body>
+</html>
